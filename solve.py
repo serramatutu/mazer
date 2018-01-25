@@ -5,3 +5,5 @@ if __name__ == '__main__':
     import sys
     maze = Maze(sys.argv[1])
     print(maze)
+    print()
+    maze.solve()
