@@ -37,20 +37,20 @@ class Maze:
         # encontrar entrada
         for i in range(0, self.width):
             if self.data[i][0]:
-                solution.start = Point(i, 0)
+                solution.start = (i, 0)
                 break
                 
         # encontrar saida
         for i in range(0, self.width):
             if self.data[i][self.height - 1]:
-                solution.end = Point(i, 0)
+                solution.end = (i, 0)
                 break
         
         for x in range(1, self.width - 1): # desconta as bordas horizontais
             for y in range(1, self.height - 1): # desconta as bordas verticais
                 if self.data[x][y]: # se é branco
                     if self._count_neighbours(x, y) != 2:
-                        graph.add_node(Point(i, 0))
+                        graph.add_node((i, 0))
                 
                 
         return graph

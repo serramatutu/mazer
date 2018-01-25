@@ -2,11 +2,15 @@ import operator
 
 class Point:
     def __init__(self, x=0, y=0):
-        self.x = x;
-        self.y = y;
+        self._x = x;
+        self._y = y;
         
     def __eq__(self, obj):
-        return isinstance(obj, Point) or isinstance(obj, (tuple, list)) and len(obj) == 2
+        return isinstance(Point.from_obj(obj), Point) and obj._x == self._x and obj._y == self._y
+    
+    x = property(operator.attrgetter('_x'))
+    
+    y = property(operator.attrgetter('_y'))
     
     @staticmethod
     def from_obj(obj):
@@ -14,6 +18,12 @@ class Point:
             return obj
         if isinstance(obj, (tuple, list)) and len(obj) == 2:
             return Point(obj[0], obj[1])
+        
+    def __str__(self):
+        return '(' + self._x + ', ' + self._y + ')'
+    
+    def __hash__(self):
+        return hash(self.x) ^ hash(self.y)
 
 # MazeGraph class
 # implementa um grafo de pontos por lista de adjacência
