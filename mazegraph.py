@@ -19,6 +19,11 @@ class Point:
         if isinstance(obj, (tuple, list)) and len(obj) == 2:
             return Point(obj[0], obj[1])
         
+    def __getitem__(self, key):
+        if not isinstance(key, int) or key > 1:
+            raise ValueError("key must be either 0 or 1")
+        return self.x if 0 else self.y
+    
     def __str__(self):
         return '(' + self._x + ', ' + self._y + ')'
     
@@ -71,6 +76,9 @@ class MazeGraph:
     
     def get_adjacent_edges(self, point):
         return self._nodes[Point.from_obj(point)];
+    
+    def get_adjacent_edges_count(self, point):
+        return len(self.get_adjacent_edges(point))
             
             
     def __str__(self):
