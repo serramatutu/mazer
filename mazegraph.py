@@ -1,4 +1,5 @@
 import operator
+from PIL import Image
 
 class Point:
     def __init__(self, x=0, y=0):
@@ -22,10 +23,13 @@ class Point:
     def __getitem__(self, key):
         if not isinstance(key, int) or key > 1:
             raise ValueError("key must be either 0 or 1")
-        return self.x if 0 else self.y
+        return self.x if key == 0 else self.y
     
     def __str__(self):
-        return '(' + self._x + ', ' + self._y + ')'
+        return '(' + str(self._x) + ', ' + str(self._y) + ')'
+    
+    def __repr__(self):
+        return '(' + str(self._x) + ', ' + str(self._y) + ')'
     
     def __hash__(self):
         return hash(self.x) ^ hash(self.y)
@@ -52,7 +56,7 @@ class MazeGraph:
         if obj in self._nodes: # apenas se o nó existir
             for edge in self._nodes[obj]: # remove referências ao nó
                 self._nodes[edge].remove(obj)
-            self._nodes.remove(obj) # remove o nó em si
+            del self._nodes[obj] # remove o nó em si
             
     def add_edge(self, a, b):
         obj_a = Point.from_obj(a)
@@ -60,9 +64,11 @@ class MazeGraph:
         
         if not all(point in self._nodes for point in [obj_a, obj_b]):
             raise ValueError("points a and b should be in graph already")
-        # conecta os dois na lista de adjacência
-        self._nodes[obj_a].append(obj_b)
-        self._nodes[obj_b].append(obj_a)
+            
+        # conecta os dois na lista de adjacência apenas se forem diferentes
+        if (obj_a != obj_b):
+            self._nodes[obj_a].append(obj_b)
+            self._nodes[obj_b].append(obj_a)
         
     def remove_edge(self, a, b):
         obj_a = Point.from_obj(a)
@@ -74,18 +80,56 @@ class MazeGraph:
         self._nodes[obj_a].remove(obj_b)
         self._nodes[obj_b].remove(obj_a)
     
-    def get_adjacent_edges(self, point):
-        return self._nodes[Point.from_obj(point)];
+    def __getitem__(self, point):
+        obj = Point.from_obj(point)
+        if obj in self._nodes:
+            return self._nodes[obj];
+        return None
     
-    def get_adjacent_edges_count(self, point):
-        return len(self.get_adjacent_edges(point))
+    def has_node(self, point):
+        obj = Point.from_obj(point)
+        return obj in self._nodes
+    
+    def has_edge(self, a, b):
+        obj_a = Point.from_obj(a)
+        obj_b = Point.from_obj(b)
+        
+        return obj_b in self._nodes[obj_a]
             
             
     def __str__(self):
-        string = str()
-        for point, edges in self._nodes:
-            string += point + ': ' + edges + '\n'
-        return string
+        return str(self._nodes)
+    
+    # iterador
+    def __iter__(self):
+        return iter(self._nodes.items())
+    
+    @property
+    def nodes(self):
+        return list(self._nodes.keys());
+    
+    def to_image(self):
+        w,h = 0, 0
+        for node in self.nodes:
+            if node.x >= w:
+                w = node.x + 1
+            if node.y >= h:
+                h = node.y + 1
+                
+        im = Image.new('RGB', (w, h))
+        im.paste((255, 255, 255), [0,0,im.size[0],im.size[1]])
+        
+        for node, edges in self:
+            for n in edges:
+                if node.x != n.x:
+                    for i in range(node.x, n.x):
+                        im.putpixel((i, node.y), (0, 0, 0))
+                else:
+                    for i in range(node.y, n.y):
+                        im.putpixel((node.x, i), (0, 0, 0))
+            im.putpixel((node.x, node.y), (255, 0, 0))
+        return im
+        
         
     # Getters e setters
     
@@ -93,12 +137,14 @@ class MazeGraph:
     
     @start.setter
     def start(self, point):
-        self.add_node(point)
-        self._start = point
+        obj = Point.from_obj(point)
+        self.add_node(obj)
+        self._start = obj
     
     end = property(operator.attrgetter('_end'))
     
     @end.setter
     def end(self, point):
-        self.add_node(point)
-        self._end = point
+        obj = Point.from_obj(point)
+        self.add_node(obj)
+        self._end = obj

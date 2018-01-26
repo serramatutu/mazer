@@ -6,4 +6,9 @@ if __name__ == '__main__':
     maze = Maze(sys.argv[1])
     print(maze)
     print()
-    maze.solve()
+    print('Graph:')
+    graph = maze.solve()
+    for node, edges in graph:
+        print(str(node) + ' -> ' + str(edges))
+    
+    graph.to_image().save(fp='graph.png')
