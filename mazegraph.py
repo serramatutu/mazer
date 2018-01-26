@@ -108,26 +108,39 @@ class MazeGraph:
     def nodes(self):
         return list(self._nodes.keys());
     
-    def to_img(self, im=None, node_color=(255, 0, 0), edge_color=(0, 255, 0)):
-        w,h = 0, 0
-        for node in self.nodes:
-            if node.x >= w:
-                w = node.x + 1
-            if node.y >= h:
-                h = node.y + 1
-                
+    def to_img(self, 
+               im=None, 
+               node_color=(255, 0, 0), 
+               edge_color=(0, 255, 0), 
+               start_at_zero=False):        
+        
+        minx, miny = 0, 0
         if im == None:
-            im = Image.new('RGB', (w, h))
+            maxx, maxy = 0, 0
+            for node in self.nodes:
+                if node.x > maxx:
+                    maxx = node.x + 1
+                if node.y > maxy:
+                    maxy = node.y + 1
+
+            if not start_at_zero:
+                minx, miny = maxx, maxy
+                for node in self.nodes:
+                    if node.x < minx:
+                        minx = node.x
+                    if node.y < miny:
+                        miny = node.y
+            im = Image.new('RGB', (maxx - minx, maxy - miny))
         
         for node, edges in self:
             for n in edges:
                 if node.x != n.x:
                     for i in range(node.x, n.x):
-                        im.putpixel((i, node.y), edge_color)
+                        im.putpixel((i - minx, node.y - miny), edge_color)
                 else:
                     for i in range(node.y, n.y):
-                        im.putpixel((node.x, i), edge_color)
-            im.putpixel((node.x, node.y), node_color)
+                        im.putpixel((node.x - minx, i - miny), edge_color)
+            im.putpixel((node.x - minx, node.y - miny), node_color)
         return im
         
         

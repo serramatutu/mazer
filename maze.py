@@ -1,5 +1,6 @@
 from PIL import Image
 from mazegraph import MazeGraph, Point
+from mazematrix import MazeMatrix
 import math
 
 # Maze class
@@ -10,8 +11,10 @@ class Maze:
         
         self.data = [[] for i in range(0, im.width)] # inicializa a matriz
         
+        rgb_im = im.convert('RGB')
+        
         for i in range(0, len(pixels)):
-            if pixels[i] > 127: # pixel branco
+            if pixels[i] > (127, 127, 127): # pixel branco
                 self.data[i % im.width].append(True); # tem caminho
             else:
                 self.data[i % im.width].append(False); # não tem caminho
@@ -36,19 +39,34 @@ class Maze:
         graph = MazeGraph()
         
         open_cols = {} # colunas ainda não fechadas
-        # encontrar entrada
-        for i in range(0, self.width):
-            if self.data[i][0]:
-                point = Point(i, 0)
-                graph.start = point
+        
+        def _assign_graph_border(point): # atribui um ponto a um dos finais do grafo
+            if graph.start == None:
                 open_cols[i] = point
-                break
-                
-        # encontrar saida
-        for i in range(0, self.width):
+                graph.start = point
+                return False
+            else:
+                graph.end = point
+                return True
+            
+        # encontrar entrada/saída nas fileiras de horizontais
+        for i in range(1, self.width - 1):
+            if self.data[i][0]:
+                if _assign_graph_border(Point(i, 0)):
+                    break
             if self.data[i][self.height - 1]:
-                graph.end = (i, self.height - 1)
-                break
+                if _assign_graph_border(Point(i, self.height - 1)):
+                    break
+                
+        # encontrar entrada/saída nas fileiras de verticais
+        if graph.end == None:
+            for i in range(1, self.height - 1):
+                if self.data[0][i]:
+                    if _assign_graph_border(Point(0, i)):
+                        break
+                if self.data[self.width - 1][i]:
+                    if _assign_graph_border(Point(self.width - 1, i)):
+                        break
         
         self._single_neighbours = [] # variável privada é otimização para não recontar
         for y in range(1, self.height - 1): # descontando as bordas verticais
@@ -81,16 +99,27 @@ class Maze:
                         graph.add_edge(open_row, point) # conecta a linha aberta ao ponto
                         open_row = point if (self.data[x+1][y]) else None # linha segue aberta apenas se for conexão
         
-        #conecta a entrada ao logo abaixo
-        y = 0
-        for i in range(0, self.height): # vai para baixo até achar o mais embaixo
-            if graph[graph.start.x, i] != None:
-                y = i
-                break
-        graph.add_edge(graph.start, (graph.start.x, y))
+        def _find_close_node(start, end, x=None, y=None):
+            ix, iy = 0, 0 
+            for i in range(start, end):
+                ix = i if x == None else x
+                iy = i if y == None else y
+                if graph[ix, iy] != None:
+                    return Point(ix, iy)
         
-        #conecta a saída ao logo acima
-        graph.add_edge(graph.end, open_cols[graph.end.x])
+        def _connect_border(node):
+            if node.x == 0:
+                graph.add_edge(node, _find_close_node(1, self.width - 2, y=node.y))
+            elif node.x == self.width - 1:
+                graph.add_edge(node, _find_close_node(self.width - 2, 1, y=node.y))
+            elif node.y == 0:
+                graph.add_edge(node, _find_close_node(1, self.height - 2, x=node.x))
+            else:
+                graph.add_edge(node, open_cols[node.x]) # caso seja embaixo é só procurar a coluna aberta
+        
+        # conecta as pontas ao grafo
+        _connect_border(graph.start)
+        _connect_border(graph.end)
         
         return graph
     
@@ -139,7 +168,7 @@ class Maze:
             return im
         
         solution = self.solve()
-        solution.to_img(im=im, node_color=solution_color, edge_color=solution_color)
+        solution.to_img(im=im, node_color=solution_color, edge_color=solution_color, start_at_zero=True)
         
         return im
     
