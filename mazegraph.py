@@ -108,7 +108,7 @@ class MazeGraph:
     def nodes(self):
         return list(self._nodes.keys());
     
-    def to_image(self):
+    def to_img(self, im=None, node_color=(255, 0, 0), edge_color=(0, 255, 0)):
         w,h = 0, 0
         for node in self.nodes:
             if node.x >= w:
@@ -116,18 +116,18 @@ class MazeGraph:
             if node.y >= h:
                 h = node.y + 1
                 
-        im = Image.new('RGB', (w, h))
-        im.paste((255, 255, 255), [0,0,im.size[0],im.size[1]])
+        if im == None:
+            im = Image.new('RGB', (w, h))
         
         for node, edges in self:
             for n in edges:
                 if node.x != n.x:
                     for i in range(node.x, n.x):
-                        im.putpixel((i, node.y), (0, 0, 0))
+                        im.putpixel((i, node.y), edge_color)
                 else:
                     for i in range(node.y, n.y):
-                        im.putpixel((node.x, i), (0, 0, 0))
-            im.putpixel((node.x, node.y), (255, 0, 0))
+                        im.putpixel((node.x, i), edge_color)
+            im.putpixel((node.x, node.y), node_color)
         return im
         
         

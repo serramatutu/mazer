@@ -10,8 +10,8 @@ class Maze:
         
         self.data = [[] for i in range(0, im.width)] # inicializa a matriz
         
-        for i, pixel in enumerate(pixels):
-            if pixel == (255, 255, 255): # pixel branco
+        for i in range(0, len(pixels)):
+            if pixels[i] > 127: # pixel branco
                 self.data[i % im.width].append(True); # tem caminho
             else:
                 self.data[i % im.width].append(False); # não tem caminho
@@ -82,12 +82,15 @@ class Maze:
                         open_row = point if (self.data[x+1][y]) else None # linha segue aberta apenas se for conexão
         
         #conecta a entrada ao logo abaixo
-        start = graph.start
-        graph.add_edge(start, (start.x, start.y + 1))
+        y = 0
+        for i in range(0, self.height): # vai para baixo até achar o mais embaixo
+            if graph[graph.start.x, i] != None:
+                y = i
+                break
+        graph.add_edge(graph.start, (graph.start.x, y))
         
         #conecta a saída ao logo acima
-        end = graph.end
-        graph.add_edge(end, open_cols[end.x])
+        graph.add_edge(graph.end, open_cols[graph.end.x])
         
         return graph
     
@@ -120,6 +123,25 @@ class Maze:
             
         
         return graph
+    
+    def to_img(self, solved=False, 
+               path_color=(255, 255, 255), 
+               wall_color=(0, 0, 0),
+               solution_color=(255, 0, 0)):
+        im = Image.new('RGB', (self.width, self.height))
+        
+        # desenha o labirinto primeiro
+        for x in range(0, self.width):
+            for y in range(0, self.height):
+                im.putpixel((x, y), path_color if self.data[x][y] else wall_color)
+                
+        if not solved:
+            return im
+        
+        solution = self.solve()
+        solution.to_img(im=im, node_color=solution_color, edge_color=solution_color)
+        
+        return im
     
     
     def _count_white_neighbours(self, x, y): # bleh
