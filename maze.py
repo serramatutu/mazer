@@ -6,7 +6,7 @@ import math
 # Maze class
 class Maze:
     def __init__(self, arg):
-        if isinstance(arg, str) or isinstance(arg, Image):
+        if isinstance(arg, str) or isinstance(arg, Image.Image):
             self.data = ImageMazeMatrix(arg)
         elif isinstance(arg, list):
             self.data = ListMazeMatrix(arg)
@@ -132,14 +132,12 @@ class Maze:
                 edges = graph[deleted]
                 graph.remove_node(deleted)
                 current = edges[0] if len(edges) > 0 else None
-        
                 
         # limpa o grafo, retirando nós inúteis
 #        current = graph[graph.start][0] # primeiro depois do começo
 #        last = graph.start
-#        while current != end:
+#        while current != graph.end:
 #            edges = graph[current]
-#            print (str(current) + ' : ' + str(edges))
 #            if self.data[current.x - 1][current.y] == self.data[current.x + 1][current.y]: # se não for canto
 #                graph.remove_node(current)
 #                graph.add_edge(edges[0], edges[1])

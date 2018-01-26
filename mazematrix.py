@@ -35,6 +35,18 @@ class ListMazeMatrix(IMazeMatrix):
         return len(self._data)
     
     
+class ImageMazeMatrixCol:
+    def __init__(self, threshold, data, stride, col_index):
+        self._threshold = threshold
+        self._col_index = col_index
+        self._stride = stride
+        self._data = data
+        
+    def __getitem__(self, index):
+        return self._data[index * self._stride + self._col_index] > self._threshold
+    
+    def __len__(self):
+        return self._stride
     
 class ImageMazeMatrix(IMazeMatrix):
     def __init__(self, img, threshold = (127, 127, 127)):
@@ -50,11 +62,7 @@ class ImageMazeMatrix(IMazeMatrix):
         
         
     def __getitem__(self, line):
-        l = list()
-        for i in range(0, self.width):
-            l.append(self._data[i * self.width + line] > self.threshold)
-            
-        return l
+        return ImageMazeMatrixCol(self.threshold, self._data, self._width, line)
     
     @property
     def width(self):
