@@ -1,23 +1,17 @@
 from PIL import Image
 from mazegraph import MazeGraph, Point
-from mazematrix import MazeMatrix
+from mazematrix import ListMazeMatrix, ImageMazeMatrix
 import math
 
 # Maze class
 class Maze:
-    def __init__(self, path):        
-        im = Image.open(path)
-        pixels = im.getdata()
-        
-        self.data = [[] for i in range(0, im.width)] # inicializa a matriz
-        
-        rgb_im = im.convert('RGB')
-        
-        for i in range(0, len(pixels)):
-            if pixels[i] > (127, 127, 127): # pixel branco
-                self.data[i % im.width].append(True); # tem caminho
-            else:
-                self.data[i % im.width].append(False); # não tem caminho
+    def __init__(self, arg):
+        if isinstance(arg, str) or isinstance(arg, Image):
+            self.data = ImageMazeMatrix(arg)
+        elif isinstance(arg, list):
+            self.data = ListMazeMatrix(arg)
+        else:
+            raise ValueError("invalid maze initialization")
     
     def __str__(self):
         string = 'Maze:\n'
@@ -25,15 +19,18 @@ class Maze:
             for x in range(0, len(self.data[0])):
                 string += ' ' if self.data[x][y] else '#'
             string += '\n'
-        return string;
+        return string
+    
+    def __getitem__(self, key):
+        return data[key]
     
     @property
     def width(self):
-        return len(self.data[0])
+        return self.data.width
     
     @property
     def height(self):
-        return len(self.data)
+        return self.data.height
     
     def to_graph(self):
         graph = MazeGraph()

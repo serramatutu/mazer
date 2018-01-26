@@ -1,5 +1,4 @@
 import operator
-from PIL import Image
 
 class Point:
     def __init__(self, x=0, y=0):
