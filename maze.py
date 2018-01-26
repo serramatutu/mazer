@@ -38,8 +38,9 @@ class Maze:
         open_cols = {} # colunas ainda não fechadas
         
         def _assign_graph_border(point): # atribui um ponto a um dos finais do grafo
+            if point.y == 0:
+                open_cols[point.x] = point # só é coluna aberta se estiver no topo
             if graph.start == None:
-                open_cols[i] = point
                 graph.start = point
                 return False
             else:
