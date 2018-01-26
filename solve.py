@@ -7,7 +7,7 @@ if __name__ == '__main__':
     print(maze)
     print()
     print('Graph:')
-    graph = maze.solve()
+    graph = maze.to_graph()
     for node, edges in graph:
         print(str(node) + ' -> ' + str(edges))
     

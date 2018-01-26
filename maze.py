@@ -32,7 +32,7 @@ class Maze:
     def height(self):
         return len(self.data)
     
-    def solve(self):
+    def to_graph(self):
         graph = MazeGraph()
         
         open_cols = {} # colunas ainda não fechadas
@@ -50,32 +50,36 @@ class Maze:
                 graph.end = (i, self.height - 1)
                 break
         
-        single_neighbours = []
+        self._single_neighbours = [] # variável privada é otimização para não recontar
         for y in range(1, self.height - 1): # descontando as bordas verticais
             open_row = None
             for x in range(1, self.width - 1): # descontando as bordas horizontais
                 if self.data[x][y]: # se é branco
                     neighbours = self._count_white_neighbours(x, y)
                     point = Point(x, y)
+                    open_col = open_cols.get(x, None)
                     
                     if neighbours != 2 or self.data[x-1][y] != self.data[x+1][y]:
                         graph.add_node(point)
                         open_cols[x] = point
+                        if open_col == None:
+                            open_col = point
                         if open_row == None:
                             open_row = point
                             
                     if neighbours <= 1:
-                        single_neighbours.append(point) # marcado para morrer, pois é sem saída
+                        self._single_neighbours.append(point) # marcado para morrer, pois é sem saída
                     
                     # checa por coluna aberta e fecha se necessário, conectando
-                    if not self.data[x][y+1] and x in open_cols: # se abaixo é fechado
-                        print ('a')
-                        graph.add_edge(open_cols.pop(x), point) # conecta a coluna aberta ao ponto
+                    if open_col != None and (neighbours > 2 or not self.data[x][y+1]): # se é ponto de conexão ou o abaixo é fechado
+                        graph.add_edge(open_col, point) # conecta a coluna aberta ao ponto
+                        if not self.data[x][y+1]: # fecha apenas se o abaixo for fechado
+                            open_cols.pop(x, None)
                         
-                    # checa por linha aberta e fecha se necessário, conectando
-                    if open_row != None and not self.data[x+1][y]: # se o esquerdo é fechado
-                        graph.add_edge(open_row, point) # conecta a linha aberta ponto
-                        open_row = None # não há mais linha aberta
+                    # checa por linha aberta e conecta quando necessário
+                    if open_row != None and (neighbours > 2 or not self.data[x+1][y]): # se é ponto de conexão ou o esquerdo é fechado
+                        graph.add_edge(open_row, point) # conecta a linha aberta ao ponto
+                        open_row = point if (self.data[x+1][y]) else None # linha segue aberta apenas se for conexão
         
         #conecta a entrada ao logo abaixo
         start = graph.start
@@ -85,14 +89,21 @@ class Maze:
         end = graph.end
         graph.add_edge(end, open_cols[end.x])
         
-#        # deve retirar do grafo todos os caminhos sem saída
-#        for point in single_neighbours:
-#            current = point
-#            while current != None and len(graph[current]) <= 1:
-#                deleted = current
-#                edges = graph[deleted]
-#                graph.remove_node(deleted)
-#                current = edges[0] if len(edges) > 0 else None
+        return graph
+    
+    
+    def solve(self):
+        graph = self.to_graph()
+        
+        # deve retirar do grafo todos os caminhos sem saída
+        for point in self._single_neighbours: # criada em to_graph
+            current = point
+            while current != None and len(graph[current]) <= 1:
+                deleted = current
+                edges = graph[deleted]
+                graph.remove_node(deleted)
+                current = edges[0] if len(edges) > 0 else None
+        
                 
         # limpa o grafo, retirando nós inúteis
 #        current = graph[graph.start][0] # primeiro depois do começo
@@ -109,6 +120,7 @@ class Maze:
             
         
         return graph
+    
     
     def _count_white_neighbours(self, x, y): # bleh
         n = 0
